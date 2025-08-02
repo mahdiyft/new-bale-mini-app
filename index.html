@@ -1,0 +1,453 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bale Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: var(--tg-theme-text-color, #333);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: var(--tg-theme-secondary-bg-color, white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--tg-theme-button-color, #667eea);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: var(--tg-theme-button-text-color, white);
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: var(--tg-theme-text-color, #333);
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .greeting {
+            color: var(--tg-theme-hint-color, #666);
+            font-size: 18px;
+            margin-bottom: 30px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .user-info {
+            background: var(--tg-theme-bg-color, #f8f9fa);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .user-name {
+            color: var(--tg-theme-text-color, #333);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .user-details {
+            color: var(--tg-theme-hint-color, #666);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            color: var(--tg-theme-hint-color, #666);
+            font-style: italic;
+        }
+        
+        .error {
+            color: #e74c3c;
+            background: #ffeaea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .debug-info {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">B</div>
+        <h1>Welcome to Bale Mini App</h1>
+        <div class="greeting" id="greeting">
+            <span class="loading">Loading user data...</span>
+        </div>
+        
+        <div class="user-info" id="userInfo" style="display: none;">
+            <div class="user-name" id="userName"></div>
+            <div class="user-details" id="userDetails"></div>
+        </div>
+        
+        <div class="error" id="errorMessage" style="display: none;"></div>
+        
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        
+        function showDebugInfo(info) {
+            const debugElement = document.getElementById('debugInfo');
+            debugElement.style.display = 'block';
+            debugElement.innerHTML = '<strong>Debug Info:</strong><br>' + JSON.stringify(info, null, 2);
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.display = 'block';
+            errorElement.textContent = message;
+        }
+        
+        function displayUserInfo(user) {
+            const greetingElement = document.getElementById('greeting');
+            const userInfoElement = document.getElementById('userInfo');
+            const userNameElement = document.getElementById('userName');
+            const userDetailsElement = document.getElementById('userDetails');
+            
+            if (user && user.first_name) {
+                greetingElement.innerHTML = `Hello, <strong>${user.first_name}</strong>! 👋`;
+                
+                userNameElement.textContent = `${user.first_name} ${user.last_name || ''}`.trim();
+                
+                let details = [];
+                if (user.username) details.push(`@${user.username}`);
+                if (user.language_code) details.push(`Language: ${user.language_code}`);
+                if (user.is_premium) details.push('Premium User ⭐');
+                
+                userDetailsElement.textContent = details.join(' • ');
+                userInfoElement.style.display = 'block';
+            } else {
+                greetingElement.innerHTML = 'Hello, Guest! 👋';
+                showError('User data not available. This might be because the app is not running inside Bale.');
+            }
+        }
+        
+        function initializeApp() {
+            try {
+                // Expand the app to full height
+                tg.expand();
+                
+                // Get user data from Telegram WebApp
+                const user = tg.initDataUnsafe?.user;
+                
+                // Show debug information
+                showDebugInfo({
+                    platform: tg.platform,
+                    version: tg.version,
+                    initDataUnsafe: tg.initDataUnsafe,
+                    user: user,
+                    colorScheme: tg.colorScheme,
+                    themeParams: tg.themeParams
+                });
+                
+                // Display user information
+                displayUserInfo(user);
+                
+                // Tell Telegram that the app is ready
+                tg.ready();
+                
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showError('Error initializing app: ' + error.message);
+                document.getElementById('greeting').innerHTML = 'Hello! 👋';
+            }
+        }
+        
+        // Initialize when the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        
+        // Handle theme changes
+        tg.onEvent('themeChanged', function() {
+            console.log('Theme changed');
+        });
+        
+        // Handle viewport changes
+        tg.onEvent('viewportChanged', function() {
+            console.log('Viewport changed');
+        });
+    </script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bale Mini App</title>
+    <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: #667eea;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .user_info {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .user-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .user-name {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .user-meta {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #e74c3c;
+            background: #ffeaea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .debug-info {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">B</div>
+        <h1>Welcome to Bale Mini App</h1>
+        <div class="user_info">
+            <span class="loading">Loading user data...</span>
+        </div>
+        
+        <div class="user-details" id="userDetails" style="display: none;">
+            <div class="user-name" id="userName"></div>
+            <div class="user-meta" id="userMeta"></div>
+        </div>
+        
+        <div class="error" id="errorMessage" style="display: none;"></div>
+        
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+    </div>
+
+    <script>
+        function showDebugInfo(info) {
+            const debugElement = document.getElementById('debugInfo');
+            debugElement.style.display = 'block';
+            debugElement.innerHTML = '<strong>Debug Info:</strong><br>' + JSON.stringify(info, null, 2);
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.display = 'block';
+            errorElement.textContent = message;
+        }
+        
+        function displayUserInfo(user) {
+            const welcomEl = document.querySelector('.user_info');
+            const userDetailsElement = document.getElementById('userDetails');
+            const userNameElement = document.getElementById('userName');
+            const userMetaElement = document.getElementById('userMeta');
+            
+            if (user && user.first_name) {
+                const userName = user.first_name;
+                welcomEl.innerHTML = `Welcome ${userName}! 👋`;
+                
+                userNameElement.textContent = `${user.first_name} ${user.last_name || ''}`.trim();
+                
+                let meta = [];
+                if (user.username) meta.push(`@${user.username}`);
+                if (user.language_code) meta.push(`Language: ${user.language_code}`);
+                if (user.is_premium) meta.push('Premium User ⭐');
+                
+                userMetaElement.textContent = meta.join(' • ');
+                userDetailsElement.style.display = 'block';
+            } else {
+                welcomEl.innerHTML = 'Welcome Guest! 👋';
+                showError('User data not available. This might be because the app is not running inside Bale.');
+            }
+        }
+        
+        function initializeApp() {
+            try {
+                // Check if Bale SDK is available
+                if (typeof window.Bale === 'undefined') {
+                    throw new Error('Bale SDK not available');
+                }
+                
+                // Get user data from Bale initData
+                const user = window.Bale.initData?.user;
+                
+                // Show debug information
+                showDebugInfo({
+                    baleSDK: typeof window.Bale !== 'undefined',
+                    initData: window.Bale.initData,
+                    user: user
+                });
+                
+                // Display user information
+                displayUserInfo(user);
+                
+                // Tell Bale that the app is ready
+                if (window.Bale.ready) {
+                    window.Bale.ready();
+                }
+                
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showError('Error initializing app: ' + error.message);
+                
+                // Fallback for testing outside Bale
+                const welcomEl = document.querySelector('.user_info');
+                welcomEl.innerHTML = 'Welcome Guest! 👋';
+                
+                showDebugInfo({
+                    error: error.message,
+                    baleSDK: typeof window.Bale !== 'undefined',
+                    windowBale: window.Bale
+                });
+            }
+        }
+        
+        // Wait for Bale SDK to load
+        function waitForBale() {
+            if (typeof window.Bale !== 'undefined') {
+                initializeApp();
+            } else {
+                setTimeout(waitForBale, 100);
+            }
+        }
+        
+        // Initialize when the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForBale);
+        } else {
+            waitForBale();
+        }
+    </script>
+</body>
+</html>
