@@ -395,17 +395,17 @@
         function initializeApp() {
             try {
                 // Check if Bale SDK is available
-                if (typeof window.Bale === 'undefined') {
+                if (typeof window.Bale.WebApp === 'undefined') {
                     throw new Error('Bale SDK not available');
                 }
                 
                 // Get user data from Bale initData
-                const user = window.Bale.initDataUnsafe?.user;
+                const user = window.Bale.WebApp.initDataUnsafe?.user;
                 
                 // Show debug information
                 showDebugInfo({
                     baleSDK: typeof window.Bale !== 'undefined',
-                    initData: window.Bale.initData,
+                    initData: window.Bale.WebApp.initData,
                     user: user
                 });
                 
@@ -413,8 +413,8 @@
                 displayUserInfo(user);
                 
                 // Tell Bale that the app is ready
-                if (window.Bale.ready) {
-                    window.Bale.ready();
+                if (window.Bale.WebApp.ready) {
+                    window.Bale.WebApp.ready();
                 }
                 
             } catch (error) {
@@ -427,7 +427,7 @@
                 
                 showDebugInfo({
                     error: error.message,
-                    baleSDK: typeof window.Bale !== 'undefined',
+                    baleSDK: typeof window.Bale.WebApp !== 'undefined',
                     windowBale: window.Bale
                 });
             }
@@ -435,7 +435,7 @@
         
         // Wait for Bale SDK to load
         function waitForBale() {
-            if (typeof window.Bale !== 'undefined') {
+            if (typeof window.Bale.WebApp !== 'undefined') {
                 initializeApp();
             } else {
                 setTimeout(waitForBale, 100);
